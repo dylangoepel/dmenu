@@ -82,7 +82,7 @@ calcoffsets(void)
 		n = mw - (promptw + inputw + TEXTW("<") + TEXTW(">"));
 	/* calculate which items will begin the next page and previous page */
 	for (i = 0, next = curr; next; next = next->right)
-		if ((i += (lines > 0) ? bh : MIN(TEXTW(next->text), n)) > n)
+		if ((i += (lines > 0) ? bh / 2 : MIN(TEXTW(next->text), n)) > n)
 			break;
 	for (i = 0, prev = curr; prev && prev->left; prev = prev->left)
 		if ((i += (lines > 0) ? bh : MIN(TEXTW(prev->left->text), n)) > n)
@@ -152,9 +152,10 @@ drawmenu(void)
 	}
 
 	if (lines > 0) {
+                int id = 1;
 		/* draw vertical list */
 		for (item = curr; item != next; item = item->right)
-			drawitem(item, x, y += bh, mw - x);
+			drawitem(item, (id++ % 2) ? x + (mw - x) / 2 : x , y += (id % 2 ? bh : 0), (mw - x) / 2);
 	} else if (matches) {
 		/* draw horizontal list */
 		x += inputw;
@@ -608,7 +609,7 @@ setup(void)
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
 
 	/* calculate menu geometry */
-	bh = drw->fonts->h + 2;
+	bh = drw->fonts->h + 10;
 	lines = MAX(lines, 0);
 	mh = (lines + 1) * bh;
 #ifdef XINERAMA
@@ -637,9 +638,14 @@ setup(void)
 				if (INTERSECT(x, y, 1, 1, info[i]))
 					break;
 
-		x = info[i].x_org;
-		y = info[i].y_org + (topbar ? 0 : info[i].height - mh);
-		mw = info[i].width;
+		x = info[i].x_org + (topbar == 2) ? (info[i].width / 6) : 0 ;
+                if(topbar == 0)
+                    y = info[i].y_org + info[i].height - mh;
+                else if(topbar == 1)
+                    y = info[i].y_org;
+                else if(topbar == 2)
+                    y = info[i].y_org + (info[i].height - mh) / 2;
+		mw = (topbar == 2) ? info[i].width * 2 / 3 : info[i].width;
 		XFree(info);
 	} else
 #endif
@@ -689,7 +695,7 @@ setup(void)
 static void
 usage(void)
 {
-	fputs("usage: dmenu [-bfiv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
+	fputs("usage: dmenu [-bcfiv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
 	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n", stderr);
 	exit(1);
 }
@@ -707,6 +713,8 @@ main(int argc, char *argv[])
 			exit(0);
 		} else if (!strcmp(argv[i], "-b")) /* appears at the bottom of the screen */
 			topbar = 0;
+                else if (!strcmp(argv[i], "-c"))
+                        topbar = 2;
 		else if (!strcmp(argv[i], "-f"))   /* grabs keyboard before reading stdin */
 			fast = 1;
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
