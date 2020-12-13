@@ -155,7 +155,7 @@ drawmenu(void)
                 int id = 1;
 		/* draw vertical list */
 		for (item = curr; item != next; item = item->right)
-			drawitem(item, (id++ % 2) ? x + (mw - x) / 2 : x , y += (id % 2 ? bh : 0), (mw - x) / 2);
+			drawitem(item, (id++ % 2 == 0) ? x + (mw - x) / 2 : x , y += (id % 2 ? bh : 0), (mw - x) / 2);
 	} else if (matches) {
 		/* draw horizontal list */
 		x += inputw;
@@ -611,7 +611,7 @@ setup(void)
 	/* calculate menu geometry */
 	bh = drw->fonts->h + 10;
 	lines = MAX(lines, 0);
-	mh = (lines + 1) * bh;
+	mh = ((lines + 1) / 2 + 1) * bh;
 #ifdef XINERAMA
 	i = 0;
 	if (parentwin == root && (info = XineramaQueryScreens(dpy, &n))) {
